@@ -1,15 +1,78 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>About</title>
-    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <title>Workouts · About</title>
+    <meta name="description" content="About the Workouts mini-site — a Cloudflare-hosted Strava dashboard." />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <script defer src="/assets/js/main.js"></script>
   </head>
   <body>
-    <h1>About</h1>
-    <p><a href="/">Back home</a></p>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/">
+          <img src="/assets/favicon.svg" alt="" />
+          Workouts <span class="tag">Demo</span>
+        </a>
+        <button class="icon-btn nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+        <nav class="nav" aria-label="Primary">
+          <a href="/">Dashboard</a>
+          <a href="/activities/">Activities</a>
+          <a href="/gear/">Gear</a>
+          <a href="/restricted/">Restricted</a>
+          <a href="/about/">About</a>
+          <button class="icon-btn" data-theme-toggle aria-label="Toggle light/dark theme">◑</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="page-head">
+        <div class="eyebrow">About</div>
+        <h1>About this site</h1>
+      </div>
+
+      <div class="prose">
+        <p><strong>Workouts</strong> is a small personal mini-site — intended to live at something like <code>workouts.mysite.com</code> — that turns my <a href="https://www.strava.com" target="_blank" rel="noopener">Strava</a> activity into an at-a-glance training dashboard.</p>
+
+        <h2>What's here</h2>
+        <ul>
+          <li><strong>Dashboard</strong> — most recent activity, most recent per sport, progress against running goals, key metrics by sport, and gear warnings.</li>
+          <li><strong>Activities</strong> — year-to-date totals per sport and a filterable activity feed.</li>
+          <li><strong>Gear</strong> — shoes and bikes tracked on Strava, with a wear bar and replacement reminders.</li>
+          <li><strong>Restricted</strong> — a private area (to be protected by Cloudflare Zero Trust) with deeper metrics and deep links into Strava.</li>
+        </ul>
+
+        <h2>How it's built</h2>
+        <ul>
+          <li>Static HTML, CSS and vanilla JavaScript — <strong>no framework, no build step</strong>.</li>
+          <li>Hosted on <strong>Cloudflare Pages</strong>; the live Strava integration will run on a <strong>Cloudflare Worker</strong> so API tokens never touch the browser.</li>
+          <li>Light/dark theming with a manual toggle (saved to your browser).</li>
+          <li>The front end reads from a single <code>window.WORKOUTS_DATA</code> object. Today that's demo data shaped like the Strava API; swapping in the live feed is a one-line change.</li>
+        </ul>
+
+        <h2>Current status</h2>
+        <p>This is the <strong>first front-end mock-up</strong> using sample data. Nothing here talks to Strava yet. The plan to wire it up lives in
+          <a href="https://github.com/gcameron00/add-strava/blob/main/docs/IMPLEMENTATION_PLAN.md">docs/IMPLEMENTATION_PLAN.md</a>, and future ideas are in
+          <a href="https://github.com/gcameron00/add-strava/blob/main/docs/ROADMAP.md">docs/ROADMAP.md</a>.</p>
+
+        <h2>Data &amp; privacy</h2>
+        <p>All figures currently shown are fictional demo data. When live, public pages will show summary metrics only; anything sensitive stays behind the Zero Trust-protected <code>/restricted</code> area.</p>
+
+        <p style="margin-top:2rem"><a href="/">← Back to the dashboard</a></p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <span>Workouts — a Strava dashboard mini-site.</span>
+        <span class="spacer"></span>
+        <a href="https://github.com/gcameron00/add-strava">Source</a>
+        <a href="/about/">About</a>
+      </div>
+    </footer>
   </body>
 </html>
