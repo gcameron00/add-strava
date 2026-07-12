@@ -1,17 +1,116 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>Home</title>
-    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <title>Workouts · Dashboard</title>
+    <meta name="description" content="A personal training dashboard powered by the Strava API — recent activity, goals, key metrics and gear tracking." />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <script defer src="/assets/js/mock-data.js"></script>
     <script defer src="/assets/js/main.js"></script>
+    <script defer src="/assets/js/dashboard.js"></script>
   </head>
   <body>
-    <h1>It works 🎉</h1>
-    <p>This site is deployed using Cloudflare Pages.</p>
-    <p><a href="/about/">About</a></p>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/">
+          <img src="/assets/favicon.svg" alt="" />
+          Workouts <span class="tag">Demo</span>
+        </a>
+        <button class="icon-btn nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+        <nav class="nav" aria-label="Primary">
+          <a href="/">Dashboard</a>
+          <a href="/activities/">Activities</a>
+          <a href="/gear/">Gear</a>
+          <a href="/restricted/">Restricted</a>
+          <a href="/about/">About</a>
+          <button class="icon-btn" data-theme-toggle aria-label="Toggle light/dark theme">◑</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="page-head">
+        <div class="eyebrow">Training dashboard</div>
+        <h1>Hey Alex — here's your week 👋</h1>
+        <p class="lede">Recent activity, progress against your goals, key metrics by sport and a heads-up on gear that needs attention.</p>
+      </div>
+
+      <div class="banner" role="note">
+        <span>ⓘ</span>
+        <div><strong>Demo data.</strong> Everything on this page is sample data shaped like the Strava API. See <a href="/about/">About</a> and the <a href="https://github.com/gcameron00/add-strava/blob/main/docs/IMPLEMENTATION_PLAN.md">implementation plan</a> for how the live Strava feed gets wired up.</div>
+      </div>
+
+      <!-- Top row: hero recent activity + yearly running goal ring -->
+      <div class="grid dashboard">
+        <div class="card span-8" id="hero-activity"></div>
+        <div class="card span-4">
+          <div class="card-head"><h3>Yearly running goal</h3></div>
+          <div class="ring-wrap" id="run-goal-ring"></div>
+        </div>
+      </div>
+
+      <!-- Recent activities + most recent by type -->
+      <section class="section">
+        <div class="grid dashboard">
+          <div class="card span-6">
+            <div class="card-head">
+              <h3>Recent activities</h3>
+              <a href="/activities/">View all →</a>
+            </div>
+            <div class="activity-list" id="recent-list"></div>
+          </div>
+          <div class="card span-6">
+            <div class="card-head"><h3>Most recent by sport</h3></div>
+            <div class="grid cols-2" id="by-type"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Running goals + weekly volume -->
+      <section class="section">
+        <div class="grid dashboard">
+          <div class="card span-6">
+            <div class="card-head"><h3>Running goals</h3><span class="muted small">weekly · monthly · yearly</span></div>
+            <div id="run-goals"></div>
+          </div>
+          <div class="card span-6">
+            <div class="card-head"><h3>Weekly run volume</h3><span class="muted small">last 8 weeks</span></div>
+            <div id="weekly-chart"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Key metrics per activity type -->
+      <section class="section">
+        <div class="card">
+          <div class="card-head"><h3>Key metrics by activity type</h3><span class="muted small">recent activities</span></div>
+          <div class="table-wrap" id="metrics-table"></div>
+        </div>
+      </section>
+
+      <!-- Gear warnings -->
+      <section class="section">
+        <div class="card">
+          <div class="card-head">
+            <h3>Gear watch 👟</h3>
+            <a href="/gear/">Manage gear →</a>
+          </div>
+          <div id="gear-warnings"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <span>Workouts — a Strava dashboard mini-site.</span>
+        <span class="muted small">Data generated <span data-generated>…</span></span>
+        <span class="spacer"></span>
+        <a href="https://github.com/gcameron00/add-strava">Source</a>
+        <a href="/about/">About</a>
+      </div>
+    </footer>
   </body>
 </html>
