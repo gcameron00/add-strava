@@ -396,6 +396,15 @@ table.data tbody tr:hover { background: var(--color-surface-2); }
 .site-footer a:hover { color: var(--color-text); }
 .site-footer .spacer { margin-left: auto; }
 
+/* Strava attribution: kept on its own row, visually separate from the
+   site's own name/branding above, per Strava's brand guidelines. */
+.strava-attribution {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem;
+  margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border);
+}
+.strava-attribution img { display: block; height: 15px; width: auto; }
+.strava-attribution p { margin: 0; max-width: 46rem; }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; scroll-behavior: auto !important; }
 }
