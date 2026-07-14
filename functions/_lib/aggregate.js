@@ -33,13 +33,7 @@ export async function buildSummary(env) {
   const gearOverrides = config.gear || {};
 
   const athlete = await fetchOrThrow("athlete profile", env, "/athlete");
-
-  const after = Math.floor((Date.now() - LOOKBACK_DAYS * DAY_MS) / 1000);
-  const activities = await fetchOrThrow("athlete activities", env, "/athlete/activities", {
-    after,
-    per_page: 100,
-  });
-
+  const activities = await fetchRecentActivities(env);
   const stats = await fetchOrThrow("athlete stats", env, `/athletes/${athlete.id}/stats`);
 
   const gear = await Promise.all([
@@ -67,6 +61,29 @@ export async function buildSummary(env) {
     runWeekly: weeklyRunDistance(activities, 8),
     generatedAt: Date.now(),
   };
+}
+
+// Strava's /athlete/activities sorts newest-first by default, but switches to
+// oldest-first if the `after` param is used — so instead of filtering with
+// `after`, page through the default order and stop once we've gone far enough
+// back (or hit a safety cap), then trim anything older than the lookback window.
+const MAX_PAGES = 5; // 500 activities safety cap
+
+async function fetchRecentActivities(env) {
+  const cutoff = Date.now() - LOOKBACK_DAYS * DAY_MS;
+  const perPage = 100;
+  let all = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const batch = await fetchOrThrow(`athlete activities (page ${page})`, env, "/athlete/activities", {
+      per_page: perPage,
+      page,
+    });
+    all = all.concat(batch);
+    const oldest = batch[batch.length - 1];
+    if (batch.length < perPage) break;
+    if (oldest && new Date(oldest.start_date_local).getTime() < cutoff) break;
+  }
+  return all.filter((a) => new Date(a.start_date_local).getTime() >= cutoff);
 }
 
 async function fetchOrThrow(label, env, path, params) {
