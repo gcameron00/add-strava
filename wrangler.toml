@@ -1,0 +1,7 @@
+name = "workouts"
+compatibility_date = "2026-07-13"
+pages_build_output_dir = "."
+
+[[kv_namespaces]]
+binding = "WORKOUTS_KV"
+id = "9ad1f3cf532d4bde996061dba9b2eea3"

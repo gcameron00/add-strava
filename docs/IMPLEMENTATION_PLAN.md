@@ -29,36 +29,57 @@ in the Worker.
 - [x] Dashboard, Activities, Gear, Restricted, About pages
 - [x] Design system (light/dark, responsive, accessible nav)
 - [x] Demo data shaped like the Strava API (`assets/js/mock-data.js`)
-- [ ] Connect the repo to a Cloudflare Pages project and set the custom domain
+- [x] Connect the repo to a Cloudflare Pages project and set the custom domain
+      (`workouts.gcameron.com`)
 
-## Phase 1 — Strava API app + OAuth
+## Phase 1 — Strava API app + OAuth ✅
 
-1. Create an API application at <https://www.strava.com/settings/api>.
+1. [x] Create an API application at <https://www.strava.com/settings/api>.
    Note the **Client ID** and **Client Secret**; set the callback domain.
-2. Do the one-time OAuth authorization-code flow to obtain a **refresh token**
-   with the scopes you need: `read`, `activity:read_all`, `profile:read_all`.
-3. Store secrets on the Worker (never in the repo):
-   ```bash
-   wrangler secret put STRAVA_CLIENT_ID
-   wrangler secret put STRAVA_CLIENT_SECRET
-   wrangler secret put STRAVA_REFRESH_TOKEN
-   ```
+2. [x] Do the one-time OAuth authorization-code flow to obtain a **refresh
+   token** with the scopes you need: `read`, `activity:read_all`,
+   `profile:read_all`.
+3. Store secrets — see "Configuring the Worker" below.
    Docs: <https://developers.strava.com/docs/authentication/>
 
-## Phase 2 — Cloudflare Worker API
+## Phase 2 — Cloudflare Worker API (in progress)
 
-1. Scaffold a Worker (`wrangler init`), add a **KV namespace** for token +
-   response caching.
-2. Implement a token manager: exchange the refresh token for a short-lived
-   access token, cache it in KV until `expires_at`, refresh on demand.
-3. Add endpoints (an `itty-router`-style router keeps this tiny):
-   - `GET /api/summary` — the dashboard payload (see shape below).
-   - `GET /api/activities?sport=Run&page=1` — paged activity feed.
-   - `GET /api/gear` — gear list with computed wear.
-4. Fetch from Strava, aggregate, and **cache the summary in KV** for ~15 min to
-   stay well within Strava's rate limits (100 req / 15 min, 1000 / day).
-5. Serve the Worker on the same domain via a Pages Function or a route so the
-   front end can call same-origin `/api/*` with no CORS.
+Implemented as **Cloudflare Pages Functions** (`functions/`) rather than a
+standalone Worker + route, since it deploys automatically alongside the
+static site on the same domain with no separate pipeline or CORS to manage.
+
+- [x] KV namespace created (`workouts-kv`, bound as `WORKOUTS_KV` in
+      `wrangler.toml`) for token + response caching.
+- [x] Token manager (`functions/_lib/strava.js`): exchanges the refresh
+      token for a short-lived access token, caches it in KV until
+      `expires_at`, refreshes on demand. Also persists a rotated
+      `refresh_token` back to KV, since Strava's can change on use.
+- [x] `GET /api/summary` (`functions/api/summary.js` +
+      `functions/_lib/aggregate.js`) — fetches athlete/activities/stats/gear
+      from Strava, aggregates into the shape below, and caches the result in
+      KV for ~15 min to stay well within Strava's rate limits (100 req / 15
+      min, 1000 / day). Serves the last good cache if Strava errors.
+- [ ] `GET /api/activities?sport=Run&page=1` — paged activity feed (the
+      current `/api/summary` payload's `activities` array covers the
+      dashboard and Activities page for now).
+- [ ] `GET /api/gear` — not yet split out; gear is included in `/api/summary`.
+
+### Configuring the Worker
+
+| Where | Name | Purpose |
+|-------|------|---------|
+| Pages project → Settings → Environment variables (encrypted) | `STRAVA_CLIENT_ID` | OAuth app id |
+| Pages project → Settings → Environment variables (encrypted) | `STRAVA_CLIENT_SECRET` | OAuth app secret |
+| Pages project → Settings → Environment variables (encrypted) | `STRAVA_REFRESH_TOKEN` | initial refresh token (KV takes over after first use) |
+| Pages project → Settings → Functions → KV bindings | `WORKOUTS_KV` → `workouts-kv` | token cache, response cache, goals/gear config |
+
+For local development, copy `.dev.vars.example` to `.dev.vars` (gitignored)
+with real values and run `npm run dev` (`wrangler pages dev`).
+
+Goals and shoe/bike `retire_at` targets aren't part of the Strava API — until
+the configurable goals UI from the roadmap exists, put them in KV under the
+key `config` as JSON: `{ "goals": {...}, "gear": { "<gear_id>": { "retire_at": 800000 } } }`.
+Defaults matching the mock data are used when `config` is absent.
 
 **Target response shape** (already what the front end consumes):
 

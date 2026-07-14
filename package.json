@@ -1,0 +1,10 @@
+{
+  "name": "workouts",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler pages dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}
