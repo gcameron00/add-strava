@@ -32,12 +32,15 @@ export async function buildSummary(env) {
   const goals = config.goals || DEFAULT_GOALS;
   const gearOverrides = config.gear || {};
 
-  const athlete = await stravaGet(env, "/athlete");
+  const athlete = await fetchOrThrow("athlete profile", env, "/athlete");
 
   const after = Math.floor((Date.now() - LOOKBACK_DAYS * DAY_MS) / 1000);
-  const activities = await stravaGet(env, "/athlete/activities", { after, per_page: 100 });
+  const activities = await fetchOrThrow("athlete activities", env, "/athlete/activities", {
+    after,
+    per_page: 100,
+  });
 
-  const stats = await stravaGet(env, `/athletes/${athlete.id}/stats`);
+  const stats = await fetchOrThrow("athlete stats", env, `/athletes/${athlete.id}/stats`);
 
   const gear = await Promise.all([
     ...(athlete.shoes || []).map((g) => fetchGear(env, g.id, "shoe", gearOverrides)),
@@ -66,8 +69,16 @@ export async function buildSummary(env) {
   };
 }
 
+async function fetchOrThrow(label, env, path, params) {
+  try {
+    return await stravaGet(env, path, params);
+  } catch (err) {
+    throw new Error(`Unable to retrieve ${label}: ${err.message}`);
+  }
+}
+
 async function fetchGear(env, id, type, overrides) {
-  const g = await stravaGet(env, `/gear/${id}`);
+  const g = await fetchOrThrow(`gear ${id}`, env, `/gear/${id}`);
   return {
     id: g.id,
     type,
