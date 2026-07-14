@@ -8,16 +8,15 @@
     <meta name="description" content="A personal training dashboard powered by the Strava API — recent activity, goals, key metrics and gear tracking." />
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/assets/css/styles.css" />
-    <script defer src="/assets/js/mock-data.js"></script>
     <script defer src="/assets/js/main.js"></script>
-    <script defer src="/assets/js/dashboard.js"></script>
+    <script defer src="/assets/js/data.js" data-render="/assets/js/dashboard.js"></script>
   </head>
   <body>
     <header class="site-header">
       <div class="container">
         <a class="brand" href="/">
           <img src="/assets/favicon.svg" alt="" />
-          Workouts <span class="tag">Demo</span>
+          Workouts
         </a>
         <button class="icon-btn nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
         <nav class="nav" aria-label="Primary">
@@ -34,13 +33,8 @@
     <main class="container">
       <div class="page-head">
         <div class="eyebrow">Training dashboard</div>
-        <h1>Hey Alex — here's your week 👋</h1>
+        <h1>Here's your week 👋</h1>
         <p class="lede">Recent activity, progress against your goals, key metrics by sport and a heads-up on gear that needs attention.</p>
-      </div>
-
-      <div class="banner" role="note">
-        <span>ⓘ</span>
-        <div><strong>Demo data.</strong> Everything on this page is sample data shaped like the Strava API. See <a href="/about/">About</a> and the <a href="https://github.com/gcameron00/add-strava/blob/main/docs/IMPLEMENTATION_PLAN.md">implementation plan</a> for how the live Strava feed gets wired up.</div>
       </div>
 
       <!-- Top row: hero recent activity + yearly running goal ring -->

@@ -15,7 +15,7 @@
       <div class="container">
         <a class="brand" href="/">
           <img src="/assets/favicon.svg" alt="" />
-          Workouts <span class="tag">Demo</span>
+          Workouts
         </a>
         <button class="icon-btn nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
         <nav class="nav" aria-label="Primary">
@@ -51,16 +51,16 @@
           <li>Static HTML, CSS and vanilla JavaScript — <strong>no framework, no build step</strong>.</li>
           <li>Hosted on <strong>Cloudflare Pages</strong>; the live Strava integration will run on a <strong>Cloudflare Worker</strong> so API tokens never touch the browser.</li>
           <li>Light/dark theming with a manual toggle (saved to your browser).</li>
-          <li>The front end reads from a single <code>window.WORKOUTS_DATA</code> object. Today that's demo data shaped like the Strava API; swapping in the live feed is a one-line change.</li>
+          <li>The front end reads from a single <code>window.WORKOUTS_DATA</code> object, populated by fetching <code>/api/summary</code> from a Cloudflare Pages Function that talks to the Strava API.</li>
         </ul>
 
         <h2>Current status</h2>
-        <p>This is the <strong>first front-end mock-up</strong> using sample data. Nothing here talks to Strava yet. The plan to wire it up lives in
-          <a href="https://github.com/gcameron00/add-strava/blob/main/docs/IMPLEMENTATION_PLAN.md">docs/IMPLEMENTATION_PLAN.md</a>, and future ideas are in
+        <p><strong>Live</strong> — the dashboard, activities feed and gear list are powered by real Strava data. See
+          <a href="https://github.com/gcameron00/add-strava/blob/main/docs/IMPLEMENTATION_PLAN.md">docs/IMPLEMENTATION_PLAN.md</a> for how it's wired up, and future ideas are in
           <a href="https://github.com/gcameron00/add-strava/blob/main/docs/ROADMAP.md">docs/ROADMAP.md</a>.</p>
 
         <h2>Data &amp; privacy</h2>
-        <p>All figures currently shown are fictional demo data. When live, public pages will show summary metrics only; anything sensitive stays behind the Zero Trust-protected <code>/restricted</code> area.</p>
+        <p>Public pages show summary metrics only; anything more sensitive stays behind the Zero Trust-protected <code>/restricted</code> area (not yet enforced).</p>
 
         <p style="margin-top:2rem"><a href="/">← Back to the dashboard</a></p>
       </div>

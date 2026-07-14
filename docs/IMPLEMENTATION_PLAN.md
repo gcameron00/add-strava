@@ -101,20 +101,22 @@ Defaults matching the mock data are used when `config` is absent.
 > Strava API — store them in KV (or a small `config.json`) and merge them into
 > the summary in the Worker.
 
-## Phase 3 — Point the front end at the Worker
+## Phase 3 — Point the front end at the Worker ✅
 
-Replace the mock assignment in `mock-data.js` (or add a `data.js` that wins) with:
+Added `data.js` (rather than editing `mock-data.js` in place) so it's a clean
+opt-in per page:
 
-```js
-window.WORKOUTS_DATA = await fetch("/api/summary").then((r) => {
-  if (!r.ok) throw new Error("summary failed");
-  return r.json();
-});
-```
-
-Then re-run the existing `init()` renders. Add a loading skeleton and an error
-state. Because every page reads only from `WORKOUTS_DATA`, no rendering code
-changes.
+- [x] Each page's `<script defer src="/assets/js/data.js" data-render="...">`
+      fetches `/api/summary`, sets `window.WORKOUTS_DATA`, then loads the
+      page's render script (named by `data-render`) — `dashboard.js`,
+      `activities.js` or `gear.js` never change.
+- [x] Error state: on a failed fetch, `data.js` shows a banner and skips
+      loading the render script entirely, instead of rendering with missing
+      data.
+- [ ] Loading skeleton (roadmap item — currently just a blank container until
+      the fetch resolves).
+- [x] `mock-data.js` kept for offline/local UI work — swap a page's `data.js`
+      tag back to it to preview without a live backend.
 
 ## Phase 4 — Protect `/restricted` with Zero Trust
 

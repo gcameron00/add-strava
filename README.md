@@ -8,10 +8,10 @@ Built as **static HTML, CSS and vanilla JavaScript — no framework, no build
 step** — and hosted on **Cloudflare Pages**. The live Strava integration will
 run on a **Cloudflare Worker** so that API tokens never reach the browser.
 
-> **Status:** first front-end mock-up. Everything you see is *demo data* shaped
-> like the Strava API — nothing talks to Strava yet. The plan to wire it up
-> lives in [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md); future
-> ideas are in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+> **Status:** live. The dashboard, activities feed and gear list are powered by
+> real Strava data via a Cloudflare Pages Function. See
+> [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) for how it's
+> wired up; future ideas are in [`docs/ROADMAP.md`](docs/ROADMAP.md).
   
 ---
 
@@ -59,19 +59,19 @@ run on a **Cloudflare Worker** so that API tokens never reach the browser.
 
 ## How the data layer works
 
-Every page renders from a single global object, `window.WORKOUTS_DATA`, provided
-today by [`assets/js/mock-data.js`](assets/js/mock-data.js). It intentionally
-mirrors the shapes returned by the Strava API (distances in metres, times in
-seconds, `sport_type`, `gear_id`, etc.).
+Every page renders from a single global object, `window.WORKOUTS_DATA`. Each
+page loads [`assets/js/data.js`](assets/js/data.js), which fetches
+`/api/summary` from the Cloudflare Pages Function (see [`functions/`](functions/))
+and, once the data lands, loads that page's render script — named via the
+`data-render` attribute on the `data.js` `<script>` tag (`dashboard.js`,
+`activities.js` or `gear.js`). If the fetch fails, `data.js` shows an error
+banner instead and the render script is never loaded, so those files never
+have to handle missing data themselves.
 
-When the backend is ready, the only change needed is to replace the mock with a
-fetch from the Cloudflare Worker:
-
-```js
-window.WORKOUTS_DATA = await fetch("/api/summary").then((r) => r.json());
-```
-
-The rendering code (`dashboard.js`, `activities.js`, `gear.js`) doesn't change.
+[`assets/js/mock-data.js`](assets/js/mock-data.js) mirrors the Strava API shape
+and is kept around for offline UI work — point a page's script tag at it
+instead of `data.js` if you want to preview layout changes without a live
+backend.
 
 ## Local preview
 
@@ -102,8 +102,8 @@ Full details, including the Worker + Strava OAuth setup, are in
 
 ## Notes on data & privacy
 
-All figures shown right now are fictional. When live, public pages will show
-summary metrics only; anything sensitive stays behind the Zero Trust-protected
-`/restricted` area. This project is not affiliated with or endorsed by Strava;
-use of the Strava API is subject to the
+Public pages show summary metrics only; anything more sensitive stays behind
+the Zero Trust-protected `/restricted` area (not yet enforced — see the
+implementation plan). This project is not affiliated with or endorsed by
+Strava; use of the Strava API is subject to the
 [Strava API Agreement](https://www.strava.com/legal/api).
