@@ -6,7 +6,16 @@ const CACHE_KEY = "cache:summary";
 const CACHE_TTL_MS = 15 * 60 * 1000;
 
 export async function onRequestGet({ env }) {
-  const cached = await env.WORKOUTS_KV.get(CACHE_KEY, "json");
+  if (!env.WORKOUTS_KV) {
+    return json({ error: "WORKOUTS_KV binding is not configured for this environment" }, 500);
+  }
+
+  let cached;
+  try {
+    cached = await env.WORKOUTS_KV.get(CACHE_KEY, "json");
+  } catch (err) {
+    return json({ error: `KV read failed: ${err}` }, 500);
+  }
   if (cached && Date.now() - cached.storedAt < CACHE_TTL_MS) {
     return json(cached.data);
   }
