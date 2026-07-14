@@ -12,7 +12,7 @@ run on a **Cloudflare Worker** so that API tokens never reach the browser.
 > like the Strava API — nothing talks to Strava yet. The plan to wire it up
 > lives in [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md); future
 > ideas are in [`docs/ROADMAP.md`](docs/ROADMAP.md).
- 
+  
 ---
 
 ## Features (front-end mock-up)
