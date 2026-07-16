@@ -1,12 +1,11 @@
 # Workouts — a Strava dashboard mini-site
 
 A small personal mini-site that turns [Strava](https://www.strava.com) activity
-into an at-a-glance training dashboard. Intended to live at something like
-`workouts.mysite.com`.
+into an at-a-glance training dashboard. Lives at `workouts.gcameron.com`.
 
 Built as **static HTML, CSS and vanilla JavaScript — no framework, no build
-step** — and hosted on **Cloudflare Pages**. The live Strava integration will
-run on a **Cloudflare Worker** so that API tokens never reach the browser.
+step** — and hosted on **Cloudflare Pages**. The live Strava integration runs
+on a **Cloudflare Pages Function** so that API tokens never reach the browser.
 
 > **Status:** live. The dashboard, activities feed and gear list are powered by
 > real Strava data via a Cloudflare Pages Function. See
@@ -15,7 +14,7 @@ run on a **Cloudflare Worker** so that API tokens never reach the browser.
   
 ---
 
-## Features (front-end mock-up)
+## Features
 
 - **Dashboard** (`/`) — the homepage:
   - Most recent activity (Today / Yesterday / N days ago) and what it was
@@ -44,13 +43,23 @@ run on a **Cloudflare Worker** so that API tokens never reach the browser.
 ├── restricted/index.html   # Private area (to be Zero Trust protected)
 ├── assets/
 │   ├── favicon.svg
+│   ├── img/powered-by-strava.svg
 │   ├── css/styles.css      # Design system: tokens + components
 │   └── js/
 │       ├── main.js         # Shared: theme toggle, nav, formatters (window.WK)
-│       ├── mock-data.js    # Demo data shaped like the Strava API
+│       ├── data.js         # Fetches /api/summary, then loads the page's render script
+│       ├── mock-data.js    # Demo data shaped like the Strava API (offline UI work)
 │       ├── dashboard.js    # Renders the dashboard
 │       ├── activities.js   # Renders the activities page
 │       └── gear.js         # Renders the gear page
+├── functions/               # Cloudflare Pages Functions (the API backend)
+│   ├── api/summary.js       # GET /api/summary — cached, aggregated payload
+│   └── _lib/
+│       ├── strava.js        # Token refresh + Strava fetch wrapper
+│       └── aggregate.js     # Builds the WORKOUTS_DATA shape from Strava responses
+├── wrangler.toml            # KV binding + Pages Functions config
+├── package.json             # wrangler devDependency for local `npm run dev`
+├── .dev.vars.example        # Template for local Strava secrets (.dev.vars, gitignored)
 ├── docs/
 │   ├── IMPLEMENTATION_PLAN.md
 │   └── ROADMAP.md

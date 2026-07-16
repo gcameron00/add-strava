@@ -138,16 +138,28 @@ Docs: <https://developers.cloudflare.com/cloudflare-one/applications/configure-a
 
 ---
 
-## Environment / config checklist
+See "Configuring the Worker" under Phase 2 above for the actual secret names
+and KV binding — everything lives in the single `workouts-kv` namespace under
+the `strava:token`, `cache:summary` and `config` keys.
 
-| Where | Name | Purpose |
-|-------|------|---------|
-| Worker secret | `STRAVA_CLIENT_ID` | OAuth app id |
-| Worker secret | `STRAVA_CLIENT_SECRET` | OAuth app secret |
-| Worker secret | `STRAVA_REFRESH_TOKEN` | long-lived refresh token |
-| Worker KV | `TOKENS` | cached access token |
-| Worker KV | `CACHE` | cached `/api/summary` payload |
-| Worker KV | `CONFIG` | goals + gear replacement targets |
+## Known gotchas
+
+- **`/athlete/activities` sort order flips with `after`.** Without the `after`
+  param, Strava returns activities newest-first; *with* it, oldest-first. Using
+  `after` + a single `per_page: 100` page therefore silently returns the
+  *oldest* 100 activities in the window, not the most recent — which is why
+  `fetchRecentActivities()` in `aggregate.js` pages through the default
+  (newest-first) order instead and stops once it's gone far enough back.
+- **A failed rebuild serves the last good cache indefinitely, not just within
+  the 15 min TTL.** This keeps the dashboard from breaking outright when
+  Strava errors, but it also means an ongoing failure can look like "the data
+  is just old" rather than throwing a visible error — check the Cloudflare
+  Pages Functions real-time logs if data looks stale.
+- **A 401 from any Strava call self-heals once**: `stravaGet()` drops the
+  cached access token and forces a fresh exchange (against the
+  `STRAVA_REFRESH_TOKEN` secret, not the possibly-stale KV-cached refresh
+  token) before retrying. This is what lets an updated refresh token secret
+  take effect without manually clearing KV.
 
 ## Testing
 
