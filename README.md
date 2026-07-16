@@ -25,22 +25,24 @@ on a **Cloudflare Pages Function** so that API tokens never reach the browser.
 - **Activities** (`/activities/`) — year-to-date totals per sport and a
   filterable activity feed.
 - **Gear** (`/gear/`) — shoes and bikes tracked on Strava, with wear bars.
-- **Restricted** (`/restricted/`) — a private area intended to sit behind
-  **Cloudflare Zero Trust Access**, with deeper metrics and deep links into
-  Strava.
+- **Restricted** (`/restricted/`) — deeper metrics, deep links into Strava,
+  and [`/restricted/settings/`](restricted/settings/index.html) for goals +
+  gear retirement config.
 - **About** (`/about/`) — what the site is and how it's built.
 - Light/dark theming with a manual toggle, responsive layout, keyboard-
   accessible navigation.
+- The whole site sits behind **Cloudflare Zero Trust Access** — nothing here
+  is public.
 
 ## Project structure
 
 ```
 .
-├── index.html              # Dashboard (public)
+├── index.html              # Dashboard
 ├── about/index.html        # About page
 ├── activities/index.html   # Activities by sport
 ├── gear/index.html         # Gear overview
-├── restricted/index.html   # Private area (to be Zero Trust protected)
+├── restricted/index.html   # Private area
 │   └── settings/index.html # Configure goals + gear retirement (not from Strava)
 ├── assets/
 │   ├── favicon.svg
@@ -106,16 +108,16 @@ Then open <http://localhost:8080>. Root-absolute paths (`/assets/...`,
 2. Framework preset: **None**. Build command: *(empty)*. Output directory: `/`
    (the repo root is already the site root).
 3. Add your custom domain, e.g. `workouts.mysite.com`.
-4. Protect the private area by adding a **Zero Trust Access** application for
-   the path `workouts.mysite.com/restricted*`.
+4. Protect the whole site with a **Zero Trust Access** application for
+   `workouts.mysite.com/*` (a single site-wide policy, rather than gating
+   just `/restricted*`).
 
 Full details, including the Worker + Strava OAuth setup, are in
 [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
 
 ## Notes on data & privacy
 
-Public pages show summary metrics only; anything more sensitive stays behind
-the Zero Trust-protected `/restricted` area (not yet enforced — see the
-implementation plan). This project is not affiliated with or endorsed by
-Strava; use of the Strava API is subject to the
+The whole site sits behind Cloudflare Zero Trust Access — there's no public
+page. This project is not affiliated with or endorsed by Strava; use of the
+Strava API is subject to the
 [Strava API Agreement](https://www.strava.com/legal/api).

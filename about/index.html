@@ -43,13 +43,14 @@
           <li><strong>Dashboard</strong> — most recent activity, most recent per sport, progress against running goals, key metrics by sport, and gear warnings.</li>
           <li><strong>Activities</strong> — year-to-date totals per sport and a filterable activity feed.</li>
           <li><strong>Gear</strong> — shoes and bikes tracked on Strava, with a wear bar and replacement reminders.</li>
-          <li><strong>Restricted</strong> — a private area (to be protected by Cloudflare Zero Trust) with deeper metrics and deep links into Strava.</li>
+          <li><strong>Restricted</strong> — deeper metrics, goal/gear settings, and deep links into Strava.</li>
         </ul>
 
         <h2>How it's built</h2>
         <ul>
           <li>Static HTML, CSS and vanilla JavaScript — <strong>no framework, no build step</strong>.</li>
-          <li>Hosted on <strong>Cloudflare Pages</strong>; the live Strava integration will run on a <strong>Cloudflare Worker</strong> so API tokens never touch the browser.</li>
+          <li>Hosted on <strong>Cloudflare Pages</strong>; the live Strava integration runs on a <strong>Cloudflare Pages Function</strong> so API tokens never touch the browser.</li>
+          <li>The whole site sits behind <strong>Cloudflare Zero Trust Access</strong> — nothing here is public.</li>
           <li>Light/dark theming with a manual toggle (saved to your browser).</li>
           <li>The front end reads from a single <code>window.WORKOUTS_DATA</code> object, populated by fetching <code>/api/summary</code> from a Cloudflare Pages Function that talks to the Strava API.</li>
         </ul>
@@ -60,7 +61,7 @@
           <a href="https://github.com/gcameron00/add-strava/blob/main/docs/ROADMAP.md">docs/ROADMAP.md</a>.</p>
 
         <h2>Data &amp; privacy</h2>
-        <p>Public pages show summary metrics only; anything more sensitive stays behind the Zero Trust-protected <code>/restricted</code> area (not yet enforced).</p>
+        <p>The whole site sits behind Cloudflare Zero Trust Access — nobody but whoever you grant access to can view any of it, public-looking pages included.</p>
 
         <h2>Strava attribution</h2>
         <p>This site is not affiliated with, endorsed by, or sponsored by Strava. It's a personal project that reads one athlete's own data through the <a href="https://developers.strava.com/" target="_blank" rel="noopener">Strava API</a>, subject to the <a href="https://www.strava.com/legal/api" target="_blank" rel="noopener">Strava API Agreement</a>. Strava, the Strava logo and related marks are trademarks of Strava, Inc.</p>

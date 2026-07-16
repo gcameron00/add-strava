@@ -66,11 +66,8 @@ static site on the same domain with no separate pipeline or CORS to manage.
 - [x] `GET`/`POST /api/config` (`functions/api/config.js`) — reads/writes the
       goals + gear retirement config (see below). `POST` also deletes the
       `cache:summary` KV key so the change is reflected on the very next
-      `/api/summary` call instead of waiting up to 15 min.
-      **Not access-controlled** — anyone who finds the URL can currently
-      overwrite this config, since Phase 4 (Zero Trust on `/restricted`)
-      isn't done yet. Low-stakes data (distance goals, shoe mileage), but
-      worth closing once Phase 4 lands.
+      `/api/summary` call instead of waiting up to 15 min. Access-controlled
+      by the site-wide Zero Trust policy from Phase 4 below.
 
 ### Configuring the Worker
 
@@ -129,14 +126,20 @@ opt-in per page:
 - [x] `mock-data.js` kept for offline/local UI work — swap a page's `data.js`
       tag back to it to preview without a live backend.
 
-## Phase 4 — Protect `/restricted` with Zero Trust
+## Phase 4 — Protect with Zero Trust ✅
 
-1. In the Cloudflare **Zero Trust** dashboard, add a **Self-hosted Access
-   application** for `workouts.mysite.com/restricted*`.
-2. Add a policy (e.g. *Allow* → your email, or a one-time PIN / Google login).
-3. Verify the public pages stay open and `/restricted` prompts for auth.
-4. Optionally have the Worker check the `Cf-Access-Jwt-Assertion` header before
-   returning private-only fields.
+Implemented more broadly than originally scoped: rather than a Self-hosted
+Access application on just `workouts.gcameron.com/restricted*`, the **whole
+site** (`workouts.gcameron.com/*`) now sits behind Cloudflare Zero Trust
+Access. Simpler to reason about (one policy, not a path-based split), and as
+a side effect it also closes the `/api/config` open-write gap noted in Phase
+2 — Zero Trust gates every request at Cloudflare's edge before it ever
+reaches a Pages Function, `/api/*` included.
+
+Trade-off to know about: if Phase 5's optional Strava **Webhook Events API**
+subscription is ever added, Strava's own servers need to reach the webhook
+callback URL unauthenticated — that path will need an explicit bypass in the
+Access policy, or the webhook will never be delivered.
 
 Docs: <https://developers.cloudflare.com/cloudflare-one/applications/configure-apps/self-hosted-public-app/>
 
