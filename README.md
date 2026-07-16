@@ -65,6 +65,7 @@ on a **Cloudflare Pages Function** so that API tokens never reach the browser.
 ├── wrangler.toml            # KV binding + Pages Functions config
 ├── package.json             # wrangler devDependency for local `npm run dev`
 ├── .dev.vars.example        # Template for local Strava secrets (.dev.vars, gitignored)
+├── _headers                 # Forces JS/CSS to revalidate on every load (no build-time cache-busting)
 ├── docs/
 │   ├── IMPLEMENTATION_PLAN.md
 │   └── ROADMAP.md

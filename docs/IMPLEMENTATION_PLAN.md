@@ -177,6 +177,19 @@ the `strava:token`, `cache:summary` and `config` keys.
   `STRAVA_REFRESH_TOKEN` secret, not the possibly-stale KV-cached refresh
   token) before retrying. This is what lets an updated refresh token secret
   take effect without manually clearing KV.
+- **Static JS/CSS can lag behind a deploy in a visitor's browser.** There's no
+  build step, so filenames never change (`gear.js` is always `gear.js`) —
+  without an explicit caching policy, a browser can keep serving a
+  pre-deploy copy of a script for a while, even though the HTML that
+  references it updates immediately (HTML documents get revalidated every
+  load; other assets don't by default). This is especially noticeable on iOS
+  Safari, which has no true hard-refresh — a normal reload can still show
+  new markup alongside old script behavior. Fixed by the root-level
+  `_headers` file forcing `Cache-Control: no-cache, must-revalidate` on
+  `/assets/js/*` and `/assets/css/*`, so every load revalidates (a fast 304
+  if unchanged, a fresh fetch if not). Devices that cached an asset *before*
+  this file existed may need one manual cache clear to pick it up; after
+  that, deploys should propagate on the next load without one.
 
 ## Testing
 
