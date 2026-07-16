@@ -29,6 +29,13 @@
     );
   }
 
+  function textField(id, label, value) {
+    return el("label", { class: "field" },
+      el("span", null, label),
+      el("input", { type: "text", id, placeholder: "e.g. Hiking", value: value || "" })
+    );
+  }
+
   function renderGoalsFields(goals) {
     const box = $("goals-fields");
     if (!box) return;
@@ -57,12 +64,14 @@
     const rows = shoes.map((g) => {
       const current = gearConfig[g.id]?.retire_at;
       const km = current != null ? current / 1000 : null;
+      const group = gearConfig[g.id]?.group || "";
       return el("div", { class: "gear-item editable" },
         el("div", { class: "g-icon" }, "👟"),
         el("div", null,
           el("div", { class: "g-name" }, `${g.brand_name} ${g.model_name}`),
           el("div", { class: "g-mileage" }, `${g.nickname ? g.nickname + " · " : ""}${(g.distance / 1000).toFixed(0)} km so far`)
         ),
+        textField(`group-${g.id}`, "Group", group),
         numberField(`gear-${g.id}`, "Retire at", km)
       );
     });
@@ -86,9 +95,14 @@
   function collectGear(shoes) {
     const gear = {};
     for (const g of shoes) {
-      const input = $(`gear-${g.id}`);
-      const km = input && input.value !== "" ? Number(input.value) : null;
-      if (km != null && km > 0) gear[g.id] = { retire_at: Math.round(km * 1000) };
+      const kmInput = $(`gear-${g.id}`);
+      const groupInput = $(`group-${g.id}`);
+      const km = kmInput && kmInput.value !== "" ? Number(kmInput.value) : null;
+      const group = groupInput && groupInput.value.trim() !== "" ? groupInput.value.trim() : null;
+      const entry = {};
+      if (km != null && km > 0) entry.retire_at = Math.round(km * 1000);
+      if (group) entry.group = group;
+      if (Object.keys(entry).length) gear[g.id] = entry;
     }
     return gear;
   }

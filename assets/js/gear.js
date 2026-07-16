@@ -49,12 +49,38 @@
     return el("div", { class: "card" }, ...children);
   }
 
+  // Shoes are grouped by the free-text "group" set in Restricted → Settings
+  // (e.g. "Running - Laax", "Hiking") — not provided by Strava. Ungrouped
+  // shoes land in a trailing "Other" section.
+  function renderShoesGrouped(shoes) {
+    const box = $("gear-shoes");
+    if (!box) return;
+    const groups = new Map();
+    for (const g of shoes) {
+      const key = g.group || "Other";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(g);
+    }
+    const keys = [...groups.keys()].sort((a, b) => {
+      if (a === "Other") return 1;
+      if (b === "Other") return -1;
+      return a.localeCompare(b);
+    });
+    const sections = keys.map((key) =>
+      el("div", { style: "margin-bottom:1.5rem" },
+        el("h3", { style: "margin-bottom:.6rem" }, key),
+        el("div", { class: "grid cols-3" }, ...groups.get(key).map(gearCard))
+      )
+    );
+    box.replaceChildren(...sections);
+  }
+
   function init() {
     const shoesBox = $("gear-shoes");
     const bikesBox = $("gear-bikes");
     if (shoesBox) {
       const shoes = D.gear.filter((g) => g.type === "shoe");
-      shoesBox.replaceChildren(...shoes.map(gearCard));
+      renderShoesGrouped(shoes);
     }
     if (bikesBox) {
       const bikes = D.gear.filter((g) => g.type === "bike");

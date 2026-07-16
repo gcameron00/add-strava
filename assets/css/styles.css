@@ -370,8 +370,12 @@ table.data tbody tr:hover { background: var(--color-surface-2); }
   padding: .5rem .6rem; width: 100%;
 }
 .field input:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
-.gear-item.editable { grid-template-columns: 44px 1fr auto; align-items: center; gap: .8rem; }
+.gear-item.editable { grid-template-columns: 44px 1fr auto auto; align-items: center; gap: .8rem; }
 .gear-item.editable .field { width: 130px; margin-bottom: 0; }
+@media (max-width: 560px) {
+  .gear-item.editable { grid-template-columns: 44px 1fr; }
+  .gear-item.editable .field { grid-column: 1 / -1; width: 100%; }
+}
 
 /* ---------- Restricted / lock ---------- */
 .lock-card { text-align: center; padding: 2.5rem 1.5rem; }

@@ -90,6 +90,7 @@ async function fetchGear(env, id, type, overrides) {
     nickname: g.nickname || g.name,
     distance: g.distance,
     retire_at: overrides[id]?.retire_at ?? null,
+    group: overrides[id]?.group ?? null,
     primary: g.primary,
     active: !g.retired,
   };

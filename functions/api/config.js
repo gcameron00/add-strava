@@ -49,7 +49,11 @@ function sanitizeConfig(body) {
   const rawGear = (body && body.gear) || {};
   for (const [id, entry] of Object.entries(rawGear)) {
     const retireAt = toPositiveNumber(entry?.retire_at);
-    if (retireAt != null) gear[id] = { retire_at: retireAt };
+    const group = toTrimmedString(entry?.group);
+    const clean = {};
+    if (retireAt != null) clean.retire_at = retireAt;
+    if (group != null) clean.group = group;
+    if (Object.keys(clean).length) gear[id] = clean;
   }
 
   return { goals, gear };
@@ -58,6 +62,12 @@ function sanitizeConfig(body) {
 function toPositiveNumber(v) {
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function toTrimmedString(v) {
+  if (typeof v !== "string") return null;
+  const s = v.trim();
+  return s ? s : null;
 }
 
 function json(body, status = 200) {

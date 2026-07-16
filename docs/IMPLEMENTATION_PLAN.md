@@ -81,13 +81,16 @@ static site on the same domain with no separate pipeline or CORS to manage.
 For local development, copy `.dev.vars.example` to `.dev.vars` (gitignored)
 with real values and run `npm run dev` (`wrangler pages dev`).
 
-Goals and shoe `retire_at` targets aren't part of the Strava API — set them at
+Goals, shoe `retire_at` targets and shoe `group` tags aren't part of the
+Strava API — set them at
 [`/restricted/settings/`](../restricted/settings/index.html), which reads and
 writes the `config` KV key via `/api/config`:
-`{ "goals": { "<Run|Ride|Swim>": { "<weekly|monthly|yearly>": { "target": <metres>, "unit": "km" } } }, "gear": { "<gear_id>": { "retire_at": <metres> } } }`.
-Every period/sport/shoe is independently optional — nothing is defaulted to a
-placeholder value; a goal or retirement target that's never been set is just
-absent, and the front end shows an empty state instead of a meter for it.
+`{ "goals": { "<Run|Ride|Swim>": { "<weekly|monthly|yearly>": { "target": <metres>, "unit": "km" } } }, "gear": { "<gear_id>": { "retire_at": <metres>, "group": <string> } } }`.
+Every period/sport/shoe field is independently optional — nothing is
+defaulted to a placeholder value; a goal, retirement target or group that's
+never been set is just absent. `group` is a free-text tag (e.g. "Running -
+Laax", "Hiking") the Gear page uses to section the shoe list — ungrouped
+shoes land in a trailing "Other" section.
 
 **Target response shape** (already what the front end consumes):
 
