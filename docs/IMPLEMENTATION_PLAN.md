@@ -63,6 +63,14 @@ static site on the same domain with no separate pipeline or CORS to manage.
       current `/api/summary` payload's `activities` array covers the
       dashboard and Activities page for now).
 - [ ] `GET /api/gear` — not yet split out; gear is included in `/api/summary`.
+- [x] `GET`/`POST /api/config` (`functions/api/config.js`) — reads/writes the
+      goals + gear retirement config (see below). `POST` also deletes the
+      `cache:summary` KV key so the change is reflected on the very next
+      `/api/summary` call instead of waiting up to 15 min.
+      **Not access-controlled** — anyone who finds the URL can currently
+      overwrite this config, since Phase 4 (Zero Trust on `/restricted`)
+      isn't done yet. Low-stakes data (distance goals, shoe mileage), but
+      worth closing once Phase 4 lands.
 
 ### Configuring the Worker
 
@@ -76,10 +84,13 @@ static site on the same domain with no separate pipeline or CORS to manage.
 For local development, copy `.dev.vars.example` to `.dev.vars` (gitignored)
 with real values and run `npm run dev` (`wrangler pages dev`).
 
-Goals and shoe/bike `retire_at` targets aren't part of the Strava API — until
-the configurable goals UI from the roadmap exists, put them in KV under the
-key `config` as JSON: `{ "goals": {...}, "gear": { "<gear_id>": { "retire_at": 800000 } } }`.
-Defaults matching the mock data are used when `config` is absent.
+Goals and shoe `retire_at` targets aren't part of the Strava API — set them at
+[`/restricted/settings/`](../restricted/settings/index.html), which reads and
+writes the `config` KV key via `/api/config`:
+`{ "goals": { "<Run|Ride|Swim>": { "<weekly|monthly|yearly>": { "target": <metres>, "unit": "km" } } }, "gear": { "<gear_id>": { "retire_at": <metres> } } }`.
+Every period/sport/shoe is independently optional — nothing is defaulted to a
+placeholder value; a goal or retirement target that's never been set is just
+absent, and the front end shows an empty state instead of a meter for it.
 
 **Target response shape** (already what the front end consumes):
 

@@ -5,31 +5,17 @@
    ============================================================= */
 import { stravaGet } from "./strava.js";
 
-// goals and shoe/bike retire_at targets aren't part of the Strava API —
-// they're athlete-defined config, stored in KV under the "config" key and
-// falling back to these defaults until the /restricted goals UI exists.
-const DEFAULT_GOALS = {
-  Run: {
-    weekly: { target: 40000, unit: "km" },
-    monthly: { target: 160000, unit: "km" },
-    yearly: { target: 1500000, unit: "km" },
-  },
-  Ride: {
-    monthly: { target: 400000, unit: "km" },
-    yearly: { target: 4000000, unit: "km" },
-  },
-  Swim: {
-    monthly: { target: 20000, unit: "km" },
-  },
-};
-
 const DAY_MS = 86400000;
 const WEEK_MS = 7 * DAY_MS;
 const LOOKBACK_DAYS = 90; // covers the activity feed + the 8-week running volume chart
 
 export async function buildSummary(env) {
+  // Goals and shoe retire_at targets aren't part of the Strava API — they're
+  // athlete-defined config from /restricted/settings/, stored in KV under the
+  // "config" key. Each period/sport is optional; nothing here is faked with
+  // placeholder defaults.
   const config = (await env.WORKOUTS_KV.get("config", "json")) || {};
-  const goals = config.goals || DEFAULT_GOALS;
+  const goals = config.goals || {};
   const gearOverrides = config.gear || {};
 
   const athlete = await fetchOrThrow("athlete profile", env, "/athlete");

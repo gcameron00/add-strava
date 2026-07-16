@@ -41,6 +41,7 @@ on a **Cloudflare Pages Function** so that API tokens never reach the browser.
 ├── activities/index.html   # Activities by sport
 ├── gear/index.html         # Gear overview
 ├── restricted/index.html   # Private area (to be Zero Trust protected)
+│   └── settings/index.html # Configure goals + gear retirement (not from Strava)
 ├── assets/
 │   ├── favicon.svg
 │   ├── img/powered-by-strava.svg
@@ -51,9 +52,11 @@ on a **Cloudflare Pages Function** so that API tokens never reach the browser.
 │       ├── mock-data.js    # Demo data shaped like the Strava API (offline UI work)
 │       ├── dashboard.js    # Renders the dashboard
 │       ├── activities.js   # Renders the activities page
-│       └── gear.js         # Renders the gear page
+│       ├── gear.js         # Renders the gear page
+│       └── settings.js     # Renders/saves the goals + gear retirement settings page
 ├── functions/               # Cloudflare Pages Functions (the API backend)
 │   ├── api/summary.js       # GET /api/summary — cached, aggregated payload
+│   ├── api/config.js        # GET/POST /api/config — goals + gear retirement config
 │   └── _lib/
 │       ├── strava.js        # Token refresh + Strava fetch wrapper
 │       └── aggregate.js     # Builds the WORKOUTS_DATA shape from Strava responses

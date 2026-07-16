@@ -11,8 +11,6 @@ it's a backlog to pull from.
   already filters by sport as a starting point.
 - **Activity detail view** — open a single activity with map, splits and a
   heart-rate chart; deep-link out to the matching Strava page.
-- **Configurable goals UI** — edit weekly/monthly/yearly targets and per-shoe
-  replacement mileage from the `/restricted` area instead of a config file.
 - **Loading & empty states** — skeletons while `/api/summary` loads, friendly
   empty states when a sport has no activities.
 - **Unit preference** — km/miles toggle, saved like the theme preference.

@@ -110,10 +110,12 @@
   }
 
   // ---- Running goals (meters + ytd ring) ----
+  // Each period (weekly/monthly/yearly) is independently optional — set from
+  // /restricted/settings/, not provided by Strava — so only render a meter
+  // for periods that actually have a target.
   function renderGoals() {
     const box = $("run-goals");
-    if (!box) return;
-    const goals = D.goals.Run;
+    const goals = D.goals.Run || {};
     const runs = D.activities.filter((a) => a.sport_type === "Run");
     const now = new Date();
     const startOfWeek = (() => {
@@ -126,29 +128,51 @@
       .filter((a) => new Date(a.start_date_local) >= since)
       .reduce((t, a) => t + a.distance, 0);
 
-    const weekDone = sumSince(startOfWeek);
-    const monthDone = sumSince(startOfMonth);
-    const yearDone = D.ytd.Run.distance;
+    const done = {
+      weekly: sumSince(startOfWeek),
+      monthly: sumSince(startOfMonth),
+      yearly: D.ytd.Run.distance,
+    };
 
-    box.replaceChildren(
-      meter("This week", weekDone, goals.weekly.target),
-      meter("This month", monthDone, goals.monthly.target),
-      meter("This year", yearDone, goals.yearly.target)
-    );
+    if (box) {
+      const meters = [
+        ["weekly", "This week"],
+        ["monthly", "This month"],
+        ["yearly", "This year"],
+      ]
+        .filter(([period]) => goals[period]?.target)
+        .map(([period, label]) => meter(label, done[period], goals[period].target));
+
+      if (meters.length) box.replaceChildren(...meters);
+      else box.replaceChildren(noGoalsMessage());
+    }
 
     const ring = $("run-goal-ring");
     if (ring) {
-      const pct = Math.min(100, Math.round((yearDone / goals.yearly.target) * 100));
-      ring.replaceChildren(
-        progressRing(pct),
-        el("div", null,
-          el("div", { class: "stat-label" }, "Yearly goal"),
-          el("div", { class: "stat-value", style: "font-size:1.3rem" }, `${fmt.km(yearDone).toFixed(0)} `,
-            el("span", { class: "unit" }, `/ ${fmt.km(goals.yearly.target).toFixed(0)} km`)),
-          el("div", { class: "stat-sub" }, `${fmt.km(goals.yearly.target - yearDone).toFixed(0)} km to go`)
-        )
-      );
+      if (goals.yearly?.target) {
+        const yearDone = done.yearly;
+        const pct = Math.min(100, Math.round((yearDone / goals.yearly.target) * 100));
+        ring.replaceChildren(
+          progressRing(pct),
+          el("div", null,
+            el("div", { class: "stat-label" }, "Yearly goal"),
+            el("div", { class: "stat-value", style: "font-size:1.3rem" }, `${fmt.km(yearDone).toFixed(0)} `,
+              el("span", { class: "unit" }, `/ ${fmt.km(goals.yearly.target).toFixed(0)} km`)),
+            el("div", { class: "stat-sub" }, `${fmt.km(goals.yearly.target - yearDone).toFixed(0)} km to go`)
+          )
+        );
+      } else {
+        ring.replaceChildren(noGoalsMessage());
+      }
     }
+  }
+
+  function noGoalsMessage() {
+    return el("p", { class: "muted small" },
+      "No goals set yet — add them in ",
+      el("a", { href: "/restricted/settings/" }, "Restricted → Settings"),
+      "."
+    );
   }
 
   function meter(label, done, target) {

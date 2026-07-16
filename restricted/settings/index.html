@@ -4,12 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>Workouts · Gear</title>
-    <meta name="description" content="Gear tracked on Strava — shoes and bikes with wear indicators and replacement reminders." />
+    <title>Workouts · Settings</title>
+    <meta name="description" content="Set distance goals and shoe retirement targets — not provided by Strava." />
+    <meta name="robots" content="noindex" />
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/assets/css/styles.css" />
     <script defer src="/assets/js/main.js"></script>
-    <script defer src="/assets/js/data.js" data-render="/assets/js/gear.js"></script>
+    <script defer src="/assets/js/settings.js"></script>
   </head>
   <body>
     <header class="site-header">
@@ -32,21 +33,30 @@
 
     <main class="container">
       <div class="page-head">
-        <div class="eyebrow">Gear</div>
-        <h1>Gear overview</h1>
-        <p class="lede">Everything tracked on Strava. Shoes show a wear bar against a replacement target so you get a nudge before they're worn out.</p>
+        <div class="eyebrow"><a href="/restricted/">Restricted</a> → Settings</div>
+        <h1>Goals &amp; gear retirement ⚙️</h1>
+        <p class="lede">Set your own distance goals and shoe replacement targets. Leave a field blank to leave that target unset.</p>
+      </div>
+
+      <div class="banner" role="note">
+        <span>ⓘ</span>
+        <div><strong>Not from Strava.</strong> Everything on this page is your own target, saved separately and merged into the dashboard — Strava has no concept of goals or gear retirement.</div>
       </div>
 
       <section class="section">
-        <div class="section-head"><h2>Shoes 👟</h2></div>
-        <p class="muted small" style="margin-top:-.5rem">Replacement targets are set manually in <a href="/restricted/settings/">Restricted → Settings</a> — not provided by Strava.</p>
-        <div class="grid cols-3" id="gear-shoes"></div>
+        <div class="section-head"><h2>Distance goals</h2><span class="muted small">km</span></div>
+        <div class="grid cols-3" id="goals-fields"></div>
       </section>
 
       <section class="section">
-        <div class="section-head"><h2>Bikes 🚲</h2></div>
-        <div class="grid cols-3" id="gear-bikes"></div>
+        <div class="section-head"><h2>Shoe retirement distances 👟</h2><span class="muted small">km</span></div>
+        <div class="card"><div id="gear-fields"></div></div>
       </section>
+
+      <div class="access-links" style="justify-content:flex-start">
+        <button class="btn primary" type="button" id="save-btn">Save changes</button>
+        <span class="muted small" id="save-status" role="status" aria-live="polite"></span>
+      </div>
     </main>
 
     <footer class="site-footer">
