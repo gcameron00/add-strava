@@ -9,13 +9,21 @@
   "use strict";
   const renderSrc = document.currentScript.dataset.render;
 
+  // Built with textContent, never innerHTML — `message` can contain raw
+  // upstream response bodies (Strava/KV errors passed through /api/summary).
   function showError(message) {
     const main = document.querySelector("main.container");
     if (!main) return;
     const banner = document.createElement("div");
     banner.className = "banner";
     banner.setAttribute("role", "alert");
-    banner.innerHTML = `<span>⚠</span><div><strong>Couldn't load your Strava data.</strong> ${message}</div>`;
+    const icon = document.createElement("span");
+    icon.textContent = "⚠";
+    const strong = document.createElement("strong");
+    strong.textContent = "Couldn't load your Strava data.";
+    const text = document.createElement("div");
+    text.append(strong, document.createTextNode(" " + message));
+    banner.append(icon, text);
     main.prepend(banner);
   }
 

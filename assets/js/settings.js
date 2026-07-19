@@ -92,6 +92,10 @@
     return goals;
   }
 
+  // Always submit an entry for every shoe on the form — an empty one is how
+  // the server knows a target was explicitly cleared. Gear that isn't on the
+  // form at all (e.g. shoes since retired on Strava) is left out so the
+  // server keeps its existing config (POST /api/config merges gear entries).
   function collectGear(shoes) {
     const gear = {};
     for (const g of shoes) {
@@ -102,7 +106,7 @@
       const entry = {};
       if (km != null && km > 0) entry.retire_at = Math.round(km * 1000);
       if (group) entry.group = group;
-      if (Object.keys(entry).length) gear[g.id] = entry;
+      gear[g.id] = entry;
     }
     return gear;
   }
@@ -112,10 +116,18 @@
     const btn = $("save-btn");
     let shoes = [];
 
+    // A failed load must not render an empty-but-plausible form: saving it
+    // would clear real goals (and, before gear merging, wiped gear config).
+    const loadJson = (url) =>
+      fetch(url).then((r) => {
+        if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
+        return r.json();
+      });
+
     try {
       const [summary, config] = await Promise.all([
-        fetch("/api/summary").then((r) => r.json()),
-        fetch("/api/config").then((r) => r.json()),
+        loadJson("/api/summary"),
+        loadJson("/api/config"),
       ]);
       shoes = (summary.gear || []).filter((g) => g.type === "shoe" && g.active);
       renderGoalsFields(config.goals || {});

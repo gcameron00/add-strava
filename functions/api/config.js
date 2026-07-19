@@ -2,17 +2,23 @@
    retirement targets. None of this comes from Strava; it's a JSON blob
    stored in KV under the "config" key, edited from /restricted/settings/. */
 
+import { requireAccess } from "../_lib/access.js";
+
 const CONFIG_KEY = "config";
 const CACHE_KEY = "cache:summary";
 const SPORTS = ["Run", "Ride", "Swim"];
 const PERIODS = ["weekly", "monthly", "yearly"];
 
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ request, env }) {
+  const denied = requireAccess(request, env);
+  if (denied) return denied;
   const config = (await env.WORKOUTS_KV.get(CONFIG_KEY, "json")) || {};
   return json(config);
 }
 
 export async function onRequestPost({ request, env }) {
+  const denied = requireAccess(request, env);
+  if (denied) return denied;
   let body;
   try {
     body = await request.json();
@@ -20,7 +26,8 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
-  const config = sanitizeConfig(body);
+  const existing = (await env.WORKOUTS_KV.get(CONFIG_KEY, "json")) || {};
+  const config = sanitizeConfig(body, existing);
   await env.WORKOUTS_KV.put(CONFIG_KEY, JSON.stringify(config));
   // Force the next /api/summary call to rebuild with the new config instead
   // of serving up to 15 minutes of the old goals/retirement targets.
@@ -31,7 +38,14 @@ export async function onRequestPost({ request, env }) {
 // Every field is optional — anything missing, blank or non-positive is
 // dropped rather than stored as a zero/null, so the dashboard can tell
 // "not set" apart from "set to zero".
-function sanitizeConfig(body) {
+//
+// Goals are replaced wholesale (the settings form always submits every
+// sport/period), but gear entries MERGE into the existing config: the form
+// only submits currently-active shoes, so entries for gear that isn't in
+// that list — shoes since retired on Strava, anything added by a future
+// client — must survive a save. A gear id that IS submitted but has no
+// valid fields left is an explicit clear and gets removed.
+function sanitizeConfig(body, existing) {
   const goals = {};
   const rawGoals = (body && body.goals) || {};
   for (const sport of SPORTS) {
@@ -45,7 +59,7 @@ function sanitizeConfig(body) {
     if (Object.keys(sportGoals).length) goals[sport] = sportGoals;
   }
 
-  const gear = {};
+  const gear = { ...((existing && existing.gear) || {}) };
   const rawGear = (body && body.gear) || {};
   for (const [id, entry] of Object.entries(rawGear)) {
     const retireAt = toPositiveNumber(entry?.retire_at);
@@ -54,6 +68,7 @@ function sanitizeConfig(body) {
     if (retireAt != null) clean.retire_at = retireAt;
     if (group != null) clean.group = group;
     if (Object.keys(clean).length) gear[id] = clean;
+    else delete gear[id];
   }
 
   return { goals, gear };

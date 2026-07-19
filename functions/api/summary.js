@@ -1,12 +1,15 @@
 /* GET /api/summary — the dashboard payload, cached in KV for 15 min to
    stay well within Strava's rate limits (100 req/15 min, 1000/day). */
 import { buildSummary } from "../_lib/aggregate.js";
+import { requireAccess } from "../_lib/access.js";
 
 const CACHE_KEY = "cache:summary";
 const CACHE_TTL_MS = 15 * 60 * 1000;
 
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ request, env }) {
   console.log("api/summary: invoked");
+  const denied = requireAccess(request, env);
+  if (denied) return denied;
   if (!env.WORKOUTS_KV) {
     return json({ error: "WORKOUTS_KV binding is not configured for this environment" }, 500);
   }

@@ -36,6 +36,10 @@
     );
   }
 
+  function emptyMessage(text) {
+    return el("p", { class: "muted small" }, text);
+  }
+
   // ---- Hero: most recent activity ----
   function renderHero() {
     const box = $("hero-activity");
@@ -43,6 +47,13 @@
     const a = [...D.activities].sort(
       (x, y) => new Date(y.start_date_local) - new Date(x.start_date_local)
     )[0];
+    if (!a) {
+      box.replaceChildren(
+        el("div", { class: "card-head" }, el("h3", null, "Most recent activity")),
+        emptyMessage("No activities in the last 90 days.")
+      );
+      return;
+    }
     const s = sportOf(a);
     box.replaceChildren(
       el("div", { class: "card-head" },
@@ -76,6 +87,10 @@
     const list = [...D.activities]
       .sort((x, y) => new Date(y.start_date_local) - new Date(x.start_date_local))
       .slice(0, 6);
+    if (!list.length) {
+      box.replaceChildren(emptyMessage("No recent activities."));
+      return;
+    }
     box.replaceChildren(...list.map(activityRow));
   }
 
@@ -206,8 +221,12 @@
   function renderWeekly() {
     const box = $("weekly-chart");
     if (!box) return;
-    const data = D.runWeekly;
-    const max = Math.max(...data);
+    const data = D.runWeekly || [];
+    const max = Math.max(...data, 0);
+    if (!data.length || max === 0) {
+      box.replaceChildren(emptyMessage("No runs in the last 8 weeks."));
+      return;
+    }
     const bars = el("div", { class: "barchart" });
     data.forEach((v) => {
       bars.append(el("div", {
@@ -295,13 +314,24 @@
 
   function init() {
     if (!D) return;
-    renderHero();
-    renderRecent();
-    renderByType();
-    renderGoals();
-    renderWeekly();
-    renderMetricsTable();
-    renderGearWarnings();
+    // Each section renders independently — one bad/empty data shape must not
+    // blank every card below it.
+    const sections = [
+      renderHero,
+      renderRecent,
+      renderByType,
+      renderGoals,
+      renderWeekly,
+      renderMetricsTable,
+      renderGearWarnings,
+    ];
+    for (const render of sections) {
+      try {
+        render();
+      } catch (err) {
+        console.error(`dashboard: ${render.name} failed`, err);
+      }
+    }
     const stamp = document.querySelector("[data-generated]");
     if (stamp) stamp.textContent = new Date(D.generatedAt).toLocaleString("en-GB");
   }

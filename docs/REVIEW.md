@@ -1,7 +1,14 @@
 # Repo review — concerns & improvements
 
-_Reviewed 2026-07-19 against `main` @ `5c23212`. Observations only — nothing in
-this document has been changed in the codebase._
+_Reviewed 2026-07-19 against `main` @ `5c23212`._
+
+_Update (same day): priorities **2, 3 and 4** and the first two
+[Security](#security) items are now **fixed** — gear config merging
+(`/api/config` + `settings.js`), the `innerHTML` error banner, dashboard
+empty states + per-section fault isolation, a Cloudflare Access JWT presence
+check on `/api/*` (`functions/_lib/access.js`, with `DISABLE_ACCESS_CHECK`
+for local dev), and security headers + CSP in `_headers`. Items below are
+marked ✅ where addressed; priorities 1 and 5 remain open._
 
 The overall shape is good: a small, framework-free static site with a thin
 Pages Functions backend, secrets kept server-side, sensible KV caching, and
@@ -18,18 +25,18 @@ called out at the top.
    `if: always()`, greps issue comments for a compare-URL, and
    `gh pr merge --merge` with no review, no CI gate, and no check that the
    branch was actually created by the action. See [CI / automation](#ci--automation).
-2. **Saving settings can silently delete config for gear that isn't an
+2. ✅ **(Fixed)** **Saving settings can silently delete config for gear that isn't an
    active shoe.** `POST /api/config` replaces the whole config blob, and
    `settings.js` only re-submits entries for currently-active shoes — so a
    `retire_at`/`group` set on a shoe that later gets retired on Strava (or any
    future bike/other-gear entry) is wiped on the next save. See
    [Backend](#backend--pages-functions--kv).
-3. **Upstream error text is injected into the page via `innerHTML`.**
+3. ✅ **(Fixed)** **Upstream error text is injected into the page via `innerHTML`.**
    `data.js`'s error banner interpolates the API error message (which itself
    embeds raw Strava response bodies) into `innerHTML`. Low practical risk
    behind Zero Trust, but it's a one-line fix (`textContent`). See
    [Front end](#front-end).
-4. **The dashboard crashes or renders garbage on empty data.**
+4. ✅ **(Fixed)** **The dashboard crashes or renders garbage on empty data.**
    `renderHero()` throws a TypeError if `activities` is empty (new season,
    new athlete, 90-day gap), and the weekly chart divides by zero when there
    are no runs. See [Front end](#front-end).
@@ -69,7 +76,8 @@ called out at the top.
 
 ## Security
 
-- **Zero Trust as the single auth layer is a deliberate, documented choice**
+- ✅ **(Fixed — presence check in `functions/_lib/access.js`)**
+  **Zero Trust as the single auth layer is a deliberate, documented choice**
   and it does close the `/api/config` open-write gap — but it's worth being
   aware that the entire API's security now rests on one dashboard-side
   config that has no representation in the repo. If the Access application
@@ -77,7 +85,7 @@ called out at the top.
   write with no second line of defence. A cheap belt-and-braces option:
   validate the `Cf-Access-Jwt-Assertion` header (or at least its presence)
   in the functions.
-- **`_headers` sets no security headers.** Since you already have the file,
+- ✅ **(Fixed)** **`_headers` sets no security headers.** Since you already have the file,
   adding `X-Content-Type-Options: nosniff`, `Referrer-Policy`,
   `X-Frame-Options`/`frame-ancestors`, and a basic CSP for `/*` is nearly
   free — and a CSP would also neutralise the `innerHTML` issue below.
@@ -92,7 +100,7 @@ called out at the top.
 
 ## Backend — Pages Functions & KV
 
-- **Config save is destructive (priority #2 above).** Two safer options:
+- ✅ **(Fixed — server-side merge)** **Config save is destructive (priority #2 above).** Two safer options:
   make `POST /api/config` merge into the existing blob rather than replace
   it, or have `settings.js` fetch the current config and re-submit entries
   it isn't editing. Merging server-side is the more robust fix since any
@@ -129,13 +137,13 @@ called out at the top.
 
 ## Front end
 
-- **`data.js` error banner uses `innerHTML` with upstream text (priority
+- ✅ **(Fixed)** **`data.js` error banner uses `innerHTML` with upstream text (priority
   #3).** `showError` builds
   `` `...` + message `` into `innerHTML`, and `message` can contain raw
   Strava/KV error bodies via `/api/summary`'s `{ error: String(err) }`.
   Build the banner with `textContent` (or the existing `WK.el` helper with
   text children).
-- **Empty states are missing (priority #4).**
+- ✅ **(Fixed)** **Empty states are missing (priority #4).**
   - `dashboard.js` `renderHero()`: `[...D.activities].sort(...)[0]` is
     `undefined` when the 90-day window is empty → `sportOf(a)` throws and,
     because `init()` isn't try/caught per-section, **every card below the
@@ -144,7 +152,7 @@ called out at the top.
     `v / max` is `NaN` → `height:NaN%`.
   - Wrapping each `render*()` in a try/catch (or an early "no recent
     activities" branch) keeps one bad section from blanking the page.
-- **`settings.js` doesn't check `res.ok`** on the initial
+- ✅ **(Fixed)** **`settings.js` doesn't check `res.ok`** on the initial
   `/api/summary` + `/api/config` fetches — a 502 with an `{ error }` body
   renders an empty-but-plausible settings form (no shoes, no goals), and a
   subsequent save would then wipe the real config (compounding priority #2).

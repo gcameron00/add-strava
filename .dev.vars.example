@@ -1,3 +1,7 @@
 STRAVA_CLIENT_ID=your_client_id
 STRAVA_CLIENT_SECRET=your_client_secret
 STRAVA_REFRESH_TOKEN=your_refresh_token
+# Local dev only: `wrangler pages dev` has no Zero Trust Access in front of
+# it, so the Cf-Access-Jwt-Assertion header the functions require is never
+# present. Do NOT set this in the Pages project's production settings.
+DISABLE_ACCESS_CHECK=true
