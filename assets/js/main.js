@@ -29,15 +29,49 @@
         btn.setAttribute("aria-expanded", String(open));
       });
     }
-    const themeBtn = document.querySelector("[data-theme-toggle]");
-    if (themeBtn) themeBtn.addEventListener("click", toggleTheme);
+    // Delegated so the theme button survives renderNav rebuilding the links.
+    if (nav) {
+      nav.addEventListener("click", (e) => {
+        if (e.target.closest("[data-theme-toggle]")) toggleTheme();
+      });
+    }
 
-    // Mark the current page in the nav.
+    // Mark the current page in the static nav (renderNav redoes this once
+    // the layout document is known).
     const path = location.pathname.replace(/index\.html$/, "").replace(/\/$/, "") || "/";
     document.querySelectorAll(".nav a").forEach((a) => {
       const href = a.getAttribute("href").replace(/\/$/, "") || "/";
       if (href === path) a.setAttribute("aria-current", "page");
     });
+  }
+
+  /* ---------- Portal routing + dynamic nav ---------- */
+  // The first portal page lives at "/"; every other page at /p/<slug>
+  // (a _redirects 200-rewrite serves the root shell for /p/*).
+  function hrefFor(slug, pages) {
+    return pages && pages.length && pages[0].slug === slug ? "/" : `/p/${slug}`;
+  }
+
+  // Rebuild the nav links from the layout document's pages, keeping the
+  // fixed Settings/About entries and the theme toggle at the end.
+  function renderNav(pages, activeSlug) {
+    const nav = document.querySelector(".nav");
+    if (!nav) return;
+    const path = location.pathname.replace(/index\.html$/, "").replace(/\/$/, "") || "/";
+    const fixed = [["Settings", "/settings/"], ["About", "/about/"]].map(([label, href]) => {
+      const a = el("a", { href }, label);
+      if (href.replace(/\/$/, "") === path) a.setAttribute("aria-current", "page");
+      return a;
+    });
+    nav.replaceChildren(
+      ...pages.map((p) => {
+        const a = el("a", { href: hrefFor(p.slug, pages) }, p.title);
+        if (p.slug === activeSlug) a.setAttribute("aria-current", "page");
+        return a;
+      }),
+      ...fixed,
+      el("button", { class: "icon-btn", "data-theme-toggle": "", "aria-label": "Toggle light/dark theme" }, "◑")
+    );
   }
 
   /* ---------- Formatters ---------- */
@@ -115,6 +149,17 @@
       { label: a.sport_type || "Other", icon: "⭐", primary: null };
   }
 
+  /* ---------- Date helpers ---------- */
+  // Monday-start week — the one week definition used everywhere (goal meters,
+  // weekly chart) so the numbers can't drift apart.
+  function startOfWeek(now = new Date()) {
+    const d = new Date(now);
+    const day = (d.getDay() + 6) % 7;
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - day);
+    return d;
+  }
+
   /* ---------- Tiny DOM helper ---------- */
   function el(tag, attrs, ...children) {
     const node = document.createElement(tag);
@@ -134,7 +179,7 @@
     return node;
   }
 
-  window.WK = { fmt, SPORT, sportOf, el, toggleTheme, DAY: 86400000 };
+  window.WK = { fmt, SPORT, sportOf, el, toggleTheme, startOfWeek, hrefFor, renderNav, DAY: 86400000 };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initNav);

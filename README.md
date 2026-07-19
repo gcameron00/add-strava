@@ -16,21 +16,24 @@ on a **Cloudflare Pages Function** so that API tokens never reach the browser.
 
 ## Features
 
-- **Dashboard** (`/`) — the homepage:
-  - Most recent activity (Today / Yesterday / N days ago) and what it was
-  - Most recent activity **per sport**
-  - Running progress vs **weekly / monthly / yearly** goals
-  - **Key metrics per activity type** (distance, time, elevation, avg HR)
-  - **Gear warnings** — shoes approaching their replacement mileage
-- **Activities** (`/activities/`) — year-to-date totals per sport and a
-  filterable activity feed.
-- **Gear** (`/gear/`) — shoes and bikes tracked on Strava, with wear bars.
-- **Restricted** (`/restricted/`) — deeper metrics, deep links into Strava,
-  and [`/restricted/settings/`](restricted/settings/index.html) for goals +
-  gear retirement config.
+- **A widget portal** — every block (recent activity hero, goal ring/meters,
+  weekly volume chart, per-sport metrics, gear watch, activity feed, single
+  shoe/bike cards, …) is a **widget template**; pages are lists of widget
+  *instances* you can move, resize (grid span), add, remove and configure
+  from the **Customise** button on any page.
+- **User-defined pages** — the shipped Dashboard / Activities / Gear /
+  Restricted pages are just the default layout. Add, rename or delete pages
+  (minimum one); the first page lives at `/`, the rest at `/p/<slug>`, and
+  the nav follows.
+- **Per-instance config** — e.g. a shoe widget is bound to one shoe; its
+  retirement target and group are edited on the widget itself (saved to the
+  athlete config, not the layout). Duplicate instances are fine and show the
+  same data.
+- **Settings** (`/settings/`) — distance goals + reset-layout-to-defaults.
 - **About** (`/about/`) — what the site is and how it's built.
 - Light/dark theming with a manual toggle, responsive layout, keyboard-
-  accessible navigation.
+  accessible navigation (edit mode's move/resize buttons work without a
+  pointer — drag is an enhancement).
 - The whole site sits behind **Cloudflare Zero Trust Access** — nothing here
   is public.
 
@@ -38,30 +41,36 @@ on a **Cloudflare Pages Function** so that API tokens never reach the browser.
 
 ```
 .
-├── index.html              # Dashboard
+├── index.html              # The single portal shell (all portal pages render here)
 ├── about/index.html        # About page
-├── activities/index.html   # Activities by sport
-├── gear/index.html         # Gear overview
-├── restricted/index.html   # Private area
-│   └── settings/index.html # Configure goals + gear retirement (not from Strava)
+├── settings/index.html     # Distance goals + layout reset (not from Strava)
+├── _redirects              # 301s for old URLs + /p/* rewrite to the portal shell
 ├── assets/
 │   ├── favicon.svg
 │   ├── img/powered-by-strava.svg
-│   ├── css/styles.css      # Design system: tokens + components
+│   ├── css/styles.css      # Design system: tokens + components + edit-mode UI
 │   └── js/
-│       ├── main.js         # Shared: theme toggle, nav, formatters (window.WK)
-│       ├── data.js         # Fetches /api/summary, then loads the page's render script
+│       ├── main.js         # Shared: theme toggle, nav render, formatters (window.WK)
+│       ├── data.js         # Fetches /api/summary + /api/layout, then loads portal.js
 │       ├── mock-data.js    # Demo data shaped like the Strava API (offline UI work)
-│       ├── dashboard.js    # Renders the dashboard
-│       ├── activities.js   # Renders the activities page
-│       ├── gear.js         # Renders the gear page
-│       └── settings.js     # Renders/saves the goals + gear retirement settings page
+│       ├── default-layout.js # The shipped pages/widgets (used when no layout is stored)
+│       ├── portal.js       # Renders a portal page from the layout document
+│       ├── edit-mode.js    # Customise mode (lazy-loaded): drag, resize, add, config
+│       ├── nav.js          # Dynamic nav for the non-portal pages (settings/about)
+│       ├── settings.js     # Renders/saves the goals settings page
+│       └── widgets/
+│           ├── registry.js         # Widget template registry (WK.widgets) + shared helpers
+│           ├── activity-widgets.js # hero, recent list, by-sport, YTD summary, feed
+│           ├── goal-widgets.js     # goal ring/meters, weekly volume, metrics table
+│           └── gear-widgets.js     # gear watch, shoe/bike overviews + singles, text card
 ├── functions/               # Cloudflare Pages Functions (the API backend)
 │   ├── api/summary.js       # GET /api/summary — cached, aggregated payload
 │   ├── api/config.js        # GET/POST /api/config — goals + gear retirement config
+│   ├── api/layout.js        # GET/POST/DELETE /api/layout — the portal layout document
 │   └── _lib/
 │       ├── strava.js        # Token refresh + Strava fetch wrapper
-│       └── aggregate.js     # Builds the WORKOUTS_DATA shape from Strava responses
+│       ├── aggregate.js     # Builds the WORKOUTS_DATA shape from Strava responses
+│       └── layout.js        # sanitizeLayout — validation/caps for the layout doc
 ├── wrangler.toml            # KV binding + Pages Functions config
 ├── package.json             # wrangler devDependency for local `npm run dev`
 ├── .dev.vars.example        # Template for local Strava secrets (.dev.vars, gitignored)
@@ -74,14 +83,25 @@ on a **Cloudflare Pages Function** so that API tokens never reach the browser.
 
 ## How the data layer works
 
-Every page renders from a single global object, `window.WORKOUTS_DATA`. Each
-page loads [`assets/js/data.js`](assets/js/data.js), which fetches
-`/api/summary` from the Cloudflare Pages Function (see [`functions/`](functions/))
-and, once the data lands, loads that page's render script — named via the
-`data-render` attribute on the `data.js` `<script>` tag (`dashboard.js`,
-`activities.js` or `gear.js`). If the fetch fails, `data.js` shows an error
-banner instead and the render script is never loaded, so those files never
-have to handle missing data themselves.
+Every page renders from two globals: `window.WORKOUTS_DATA` (the Strava
+summary) and `window.WORKOUTS_LAYOUT` (the layout document, or `null` for
+"use the shipped default"). [`assets/js/data.js`](assets/js/data.js) fetches
+`/api/summary` and `/api/layout` in parallel, then loads
+[`portal.js`](assets/js/portal.js), which picks the page for the current URL
+(`/` = first page, `/p/<slug>` via the `_redirects` rewrite) and renders its
+widgets — each one isolated in a try/catch so one bad widget can't blank the
+page. A summary failure shows an error banner and stops; a layout failure
+just falls back to [`default-layout.js`](assets/js/default-layout.js).
+
+The layout document lives in KV under `layout` (`{version, pages[]}`, each
+page `{id, slug, title, …, widgets[]}` and each widget
+`{instanceId, templateId, span, config}`). Saving from Customise mode POSTs
+the whole document; the previous version is kept under `layout:backup` and
+`DELETE /api/layout` resets to defaults. Widget templates register themselves
+on `WK.widgets` (see [`assets/js/widgets/registry.js`](assets/js/widgets/registry.js))
+with a `configSchema` that drives the auto-generated per-instance settings
+dialog; fields marked `writeThrough: "gearConfig"` (shoe retire-at / group)
+save via `POST /api/config` instead of the layout.
 
 [`assets/js/mock-data.js`](assets/js/mock-data.js) mirrors the Strava API shape
 and is kept around for offline UI work — point a page's script tag at it

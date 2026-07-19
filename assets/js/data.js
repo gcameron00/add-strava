@@ -34,9 +34,24 @@
     return body;
   }
 
-  load()
-    .then((data) => {
+  // The layout doc is optional: null / a failed fetch just means "use the
+  // shipped default layout" — never block the page on it.
+  async function loadLayout() {
+    try {
+      const res = await fetch("/api/layout");
+      if (!res.ok) return null;
+      const body = await res.json();
+      return (body && body.layout) || null;
+    } catch (err) {
+      console.warn("Failed to load /api/layout, using default layout:", err);
+      return null;
+    }
+  }
+
+  Promise.all([load(), loadLayout()])
+    .then(([data, layout]) => {
       window.WORKOUTS_DATA = data;
+      window.WORKOUTS_LAYOUT = layout;
       if (renderSrc) document.head.appendChild(Object.assign(document.createElement("script"), { src: renderSrc }));
     })
     .catch((err) => {

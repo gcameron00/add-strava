@@ -39,15 +39,23 @@ export async function onRequestPost({ request, env }) {
 // dropped rather than stored as a zero/null, so the dashboard can tell
 // "not set" apart from "set to zero".
 //
-// Goals are replaced wholesale (the settings form always submits every
-// sport/period), but gear entries MERGE into the existing config: the form
-// only submits currently-active shoes, so entries for gear that isn't in
-// that list — shoes since retired on Strava, anything added by a future
-// client — must survive a save. A gear id that IS submitted but has no
-// valid fields left is an explicit clear and gets removed.
+// Goals are replaced wholesale when a `goals` key is submitted (the settings
+// form always submits every sport/period) but carried forward untouched when
+// it's absent — gear widgets POST gear-only bodies and must not wipe goals.
+// Gear entries MERGE into the existing config: a client only submits the
+// gear it's editing, so entries for gear that isn't in the body — shoes
+// since retired on Strava, other widgets' gear — must survive a save. A
+// gear id that IS submitted but has no valid fields left is an explicit
+// clear and gets removed.
 function sanitizeConfig(body, existing) {
+  if (!body || body.goals === undefined) {
+    return {
+      goals: (existing && existing.goals) || {},
+      gear: mergeGear(body, existing),
+    };
+  }
   const goals = {};
-  const rawGoals = (body && body.goals) || {};
+  const rawGoals = body.goals || {};
   for (const sport of SPORTS) {
     const rawSport = rawGoals[sport];
     if (!rawSport) continue;
@@ -59,6 +67,10 @@ function sanitizeConfig(body, existing) {
     if (Object.keys(sportGoals).length) goals[sport] = sportGoals;
   }
 
+  return { goals, gear: mergeGear(body, existing) };
+}
+
+function mergeGear(body, existing) {
   const gear = { ...((existing && existing.gear) || {}) };
   const rawGear = (body && body.gear) || {};
   for (const [id, entry] of Object.entries(rawGear)) {
@@ -70,8 +82,7 @@ function sanitizeConfig(body, existing) {
     if (Object.keys(clean).length) gear[id] = clean;
     else delete gear[id];
   }
-
-  return { goals, gear };
+  return gear;
 }
 
 function toPositiveNumber(v) {

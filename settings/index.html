@@ -4,12 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>Workouts · Activities</title>
-    <meta name="description" content="Activities by sport with year-to-date totals and a filterable feed." />
+    <title>Workouts · Settings</title>
+    <meta name="description" content="Set distance goals and reset the portal layout — not provided by Strava." />
+    <meta name="robots" content="noindex" />
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/assets/css/styles.css" />
     <script defer src="/assets/js/main.js"></script>
-    <script defer src="/assets/js/data.js" data-render="/assets/js/activities.js"></script>
+    <script defer src="/assets/js/default-layout.js"></script>
+    <script defer src="/assets/js/nav.js"></script>
+    <script defer src="/assets/js/settings.js"></script>
   </head>
   <body>
     <header class="site-header">
@@ -21,9 +24,7 @@
         <button class="icon-btn nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
         <nav class="nav" aria-label="Primary">
           <a href="/">Dashboard</a>
-          <a href="/activities/">Activities</a>
-          <a href="/gear/">Gear</a>
-          <a href="/restricted/">Restricted</a>
+          <a href="/settings/">Settings</a>
           <a href="/about/">About</a>
           <button class="icon-btn" data-theme-toggle aria-label="Toggle light/dark theme">◑</button>
         </nav>
@@ -32,21 +33,34 @@
 
     <main class="container">
       <div class="page-head">
-        <div class="eyebrow">Activities</div>
-        <h1>Activities by sport</h1>
-        <p class="lede">Year-to-date totals per sport and a filterable feed of recent sessions. Use the buttons to focus on a single sport.</p>
+        <div class="eyebrow">Settings</div>
+        <h1>Settings ⚙️</h1>
+        <p class="lede">Distance goals and portal housekeeping. Shoe retirement targets and groups moved onto the shoe widgets — edit them in Customise mode.</p>
+      </div>
+
+      <div class="banner" role="note">
+        <span>ⓘ</span>
+        <div><strong>Not from Strava.</strong> Everything on this page is your own target, saved separately and merged into the dashboard — Strava has no concept of goals or gear retirement.</div>
       </div>
 
       <section class="section">
-        <div class="section-head"><h2>Year to date</h2></div>
-        <div class="grid cols-3" id="sport-summary"></div>
+        <div class="section-head"><h2>Distance goals</h2><span class="muted small">km · blank = unset</span></div>
+        <div class="grid cols-3" id="goals-fields"></div>
       </section>
 
+      <div class="access-links start">
+        <button class="btn primary" type="button" id="save-btn">Save goals</button>
+        <span class="muted small" id="save-status" role="status" aria-live="polite"></span>
+      </div>
+
       <section class="section">
-        <div class="section-head"><h2>Activity feed</h2></div>
-        <div class="access-links" id="sport-filters" style="justify-content:flex-start;margin-bottom:1rem"></div>
+        <div class="section-head"><h2>Portal layout</h2></div>
         <div class="card">
-          <div class="table-wrap" id="activity-feed"></div>
+          <p class="muted small">Pages and widgets are yours to rearrange from the Customise button on any page. If it's in a mess, start over:</p>
+          <div class="access-links start">
+            <button class="btn" type="button" id="reset-layout-btn">Reset layout to defaults…</button>
+            <span class="muted small" id="reset-status" role="status" aria-live="polite"></span>
+          </div>
         </div>
       </section>
     </main>

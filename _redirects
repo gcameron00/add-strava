@@ -1,0 +1,13 @@
+# Old fixed-page URLs -> their portal/system successors.
+/activities  /p/activities  301
+/activities/  /p/activities  301
+/gear  /p/gear  301
+/gear/  /p/gear  301
+/restricted/settings  /settings/  301
+/restricted/settings/  /settings/  301
+/restricted  /p/restricted  301
+/restricted/  /p/restricted  301
+
+# Portal pages are user-defined: serve the root shell for any /p/<slug>
+# and let portal.js pick the page from the layout document.
+/p/*  /  200

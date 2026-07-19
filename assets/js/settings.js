@@ -1,7 +1,8 @@
 /* =============================================================
-   settings.js — powers /restricted/settings/. Lets you set distance
-   goals and shoe retirement targets, neither of which come from
-   Strava, and saves them to KV via GET/POST /api/config.
+   settings.js — powers /settings/. Distance goals (saved to KV via
+   GET/POST /api/config) and portal-layout housekeeping. Shoe
+   retirement targets and groups are edited on the shoe widgets in
+   Customise mode, not here.
    ============================================================= */
 (function () {
   "use strict";
@@ -29,13 +30,6 @@
     );
   }
 
-  function textField(id, label, value) {
-    return el("label", { class: "field" },
-      el("span", null, label),
-      el("input", { type: "text", id, placeholder: "e.g. Hiking", value: value || "" })
-    );
-  }
-
   function renderGoalsFields(goals) {
     const box = $("goals-fields");
     if (!box) return;
@@ -53,31 +47,6 @@
     box.replaceChildren(...cards);
   }
 
-  function renderGearFields(gearList, gearConfig) {
-    const box = $("gear-fields");
-    if (!box) return;
-    const shoes = gearList.filter((g) => g.type === "shoe" && g.active);
-    if (!shoes.length) {
-      box.replaceChildren(el("p", { class: "muted" }, "No active shoes found on Strava."));
-      return;
-    }
-    const rows = shoes.map((g) => {
-      const current = gearConfig[g.id]?.retire_at;
-      const km = current != null ? current / 1000 : null;
-      const group = gearConfig[g.id]?.group || "";
-      return el("div", { class: "gear-item editable" },
-        el("div", { class: "g-icon" }, "👟"),
-        el("div", null,
-          el("div", { class: "g-name" }, `${g.brand_name} ${g.model_name}`),
-          el("div", { class: "g-mileage" }, `${g.nickname ? g.nickname + " · " : ""}${(g.distance / 1000).toFixed(0)} km so far`)
-        ),
-        textField(`group-${g.id}`, "Group", group),
-        numberField(`gear-${g.id}`, "Retire at", km)
-      );
-    });
-    box.replaceChildren(...rows);
-  }
-
   function collectGoals() {
     const goals = {};
     for (const sport of SPORTS) {
@@ -92,46 +61,39 @@
     return goals;
   }
 
-  // Always submit an entry for every shoe on the form — an empty one is how
-  // the server knows a target was explicitly cleared. Gear that isn't on the
-  // form at all (e.g. shoes since retired on Strava) is left out so the
-  // server keeps its existing config (POST /api/config merges gear entries).
-  function collectGear(shoes) {
-    const gear = {};
-    for (const g of shoes) {
-      const kmInput = $(`gear-${g.id}`);
-      const groupInput = $(`group-${g.id}`);
-      const km = kmInput && kmInput.value !== "" ? Number(kmInput.value) : null;
-      const group = groupInput && groupInput.value.trim() !== "" ? groupInput.value.trim() : null;
-      const entry = {};
-      if (km != null && km > 0) entry.retire_at = Math.round(km * 1000);
-      if (group) entry.group = group;
-      gear[g.id] = entry;
-    }
-    return gear;
+  function initResetLayout() {
+    const btn = $("reset-layout-btn");
+    const status = $("reset-status");
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+      if (!confirm("Reset all pages and widgets to the shipped defaults? Your goals and gear settings are kept.")) return;
+      btn.disabled = true;
+      if (status) status.textContent = "Resetting…";
+      try {
+        const res = await fetch("/api/layout", { method: "DELETE" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (status) status.textContent = "Layout reset.";
+      } catch (err) {
+        console.error("Failed to reset layout:", err);
+        if (status) status.textContent = "Failed to reset — see console.";
+      } finally {
+        btn.disabled = false;
+      }
+    });
   }
 
   async function init() {
     const status = $("save-status");
     const btn = $("save-btn");
-    let shoes = [];
+    initResetLayout();
 
     // A failed load must not render an empty-but-plausible form: saving it
-    // would clear real goals (and, before gear merging, wiped gear config).
-    const loadJson = (url) =>
-      fetch(url).then((r) => {
-        if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
-        return r.json();
-      });
-
+    // would clear real goals.
     try {
-      const [summary, config] = await Promise.all([
-        loadJson("/api/summary"),
-        loadJson("/api/config"),
-      ]);
-      shoes = (summary.gear || []).filter((g) => g.type === "shoe" && g.active);
+      const res = await fetch("/api/config");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const config = await res.json();
       renderGoalsFields(config.goals || {});
-      renderGearFields(summary.gear || [], config.gear || {});
     } catch (err) {
       console.error("Failed to load current settings:", err);
       if (status) status.textContent = "Failed to load current settings — see console.";
@@ -143,11 +105,12 @@
         btn.disabled = true;
         if (status) status.textContent = "Saving…";
         try {
-          const body = { goals: collectGoals(), gear: collectGear(shoes) };
+          // Always send the goals key: its presence means "replace goals
+          // wholesale" to /api/config (gear-only bodies leave goals alone).
           const res = await fetch("/api/config", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify(body),
+            body: JSON.stringify({ goals: collectGoals() }),
           });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           if (status) status.textContent = "Saved.";

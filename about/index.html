@@ -9,6 +9,8 @@
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/assets/css/styles.css" />
     <script defer src="/assets/js/main.js"></script>
+    <script defer src="/assets/js/default-layout.js"></script>
+    <script defer src="/assets/js/nav.js"></script>
   </head>
   <body>
     <header class="site-header">
@@ -20,9 +22,7 @@
         <button class="icon-btn nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
         <nav class="nav" aria-label="Primary">
           <a href="/">Dashboard</a>
-          <a href="/activities/">Activities</a>
-          <a href="/gear/">Gear</a>
-          <a href="/restricted/">Restricted</a>
+          <a href="/settings/">Settings</a>
           <a href="/about/">About</a>
           <button class="icon-btn" data-theme-toggle aria-label="Toggle light/dark theme">◑</button>
         </nav>
@@ -40,10 +40,9 @@
 
         <h2>What's here</h2>
         <ul>
-          <li><strong>Dashboard</strong> — most recent activity, most recent per sport, progress against running goals, key metrics by sport, and gear warnings.</li>
-          <li><strong>Activities</strong> — year-to-date totals per sport and a filterable activity feed.</li>
-          <li><strong>Gear</strong> — shoes and bikes tracked on Strava, with a wear bar and replacement reminders.</li>
-          <li><strong>Restricted</strong> — deeper metrics, goal/gear settings, and deep links into Strava.</li>
+          <li><strong>A widget portal</strong> — every block (recent activity, goals, metrics, gear watch, feeds…) is a widget instance you can move, resize, add, remove and configure from the <em>Customise</em> button.</li>
+          <li><strong>Your pages</strong> — the shipped Dashboard / Activities / Gear / Restricted pages are just the default layout; add, rename or delete pages as you like (down to a minimum of one).</li>
+          <li><strong>Settings</strong> — distance goals and a reset-to-defaults for the layout; shoe retirement targets are set on the shoe widgets themselves.</li>
         </ul>
 
         <h2>How it's built</h2>
